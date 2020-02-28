@@ -35,7 +35,9 @@ bookmarkRouter
         if(url.length < 5) {
             return res
                     .status(400)
-                    .send('url needs to be at least 5 chars in length')
+                    .json({
+                        error: { message: `url length must be at least 5 characters in length`}
+                    })
         }
         if(Math.floor(rating) > 5 || Math.floor(rating) < 0) {
             return res
