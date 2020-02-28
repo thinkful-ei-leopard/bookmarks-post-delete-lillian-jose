@@ -31,7 +31,7 @@ app.use(cors())
 // })
 
 //Route
-app.use('/bookmarks', bookmarkRouter)
+app.use('/api/bookmarks', bookmarkRouter)
 
 
 app.get('/', (req, res) => {

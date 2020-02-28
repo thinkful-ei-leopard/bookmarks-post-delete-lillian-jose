@@ -1,3 +1,4 @@
+const path = require('path')
 const express = require('express')
 const xss = require('xss')
 const uuid = require('uuid/v4')
@@ -54,31 +55,37 @@ bookmarkRouter
             newBookmark
         )
             .then(bookmark => {
-                res.status(201).location(`/bookmarks/${bookmark.id}`).json(bookmark)
+                res.status(201).location(path.posix.join(req.originalUrl + `/${bookmark.id}`)).json(bookmark)
             })
             .catch(next)
     })
 
 bookmarkRouter
     .route('/:id')
-    .get((req, res, next) => {
-        const knexInstance = req.app.get('knexInstance')    
-        BookmarksService.getById(knexInstance, req.params.id)
-            .then(bookmark => {
-                if(!bookmark) {
-                    return res.status(404).json({
-                        error: { message: `bookmark doesn't exist` }
-                    })
-                }
-                res.json({
-                    id: bookmark.id,
-                    title: xss(bookmark.title),
-                    url: xss(bookmark.url),
-                    description: xss(bookmark.description),
-                    rating: bookmark.rating
+    .all((req, res, next) => {
+        BookmarksService.getById(
+            req.app.get('knexInstance'),
+            req.params.id
+        )
+        .then(bookmark => {
+            if (!bookmark) {
+                return res.status(404).json({
+                    error: { message: `bookmark doesn't exist` }
                 })
-            })
-            .catch(next)
+            }
+            res.bookmark = bookmark
+            next()
+        })
+        .catch(next)
+    })
+    .get((req, res, next) => {
+        res.json({
+            id: res.bookmark.id,
+            title: xss(res.bookmark.title),
+            url: res.bookmark.url,
+            description: xss(res.bookmark.description),
+            rating: res.bookmark.rating
+        })
     })
     .delete((req, res, next) => {
         const knexInstance = req.app.get('knexInstance')
@@ -93,6 +100,20 @@ bookmarkRouter
                 res.status(204).end()
             })
             .catch(next)
+    })
+    .patch(bodyParser, (req, res, next) => {
+        const { title, url, rating, description} = req.body
+        const bookmarkToUpdate = { title, url, rating, description}
+
+        BookmarksService.updateBookmark(
+            req.app.get('knexInstance'),
+            req.params.id,
+            bookmarkToUpdate
+        )
+        .then(numRowsAffected => {
+            res.status(204).end()
+        })
+        .catch(next)
     })
 
     module.exports = bookmarkRouter
