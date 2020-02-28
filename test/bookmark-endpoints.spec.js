@@ -78,7 +78,7 @@ describe.only('Bookmarks Endpoints', function() {
         })
     })
 
-    describe.only(`Post /bookmarks`, () => {
+    describe(`Post /bookmarks`, () => {
         it(`creates a bookmark, responding with 201 and the new bookmark`, function() {
             this.retries(3)
             const newBookmark = {
@@ -128,6 +128,23 @@ describe.only('Bookmarks Endpoints', function() {
                         error: { message: `missing ${field} in request body` }
                     })
             })
+        })
+
+        // Rating Test
+        it(`rsponds with 400 and an error message when the rating is not between 1-5`, () => {
+            const newBookmark = {
+                title: "apple",
+                url: "www.apple.com",
+                description: "idk",
+                rating: 7
+            }
+
+            return supertest(app)
+                .post('/bookmarks')
+                .send(newBookmark)
+                .expect(400, {
+                    error: { message: `number must be between 1-5` }
+                })
         })
     })
 

@@ -24,12 +24,6 @@ bookmarkRouter
         const { title, url, description, rating } = req.body
         const newBookmark = { title, url, rating, description}
 
-        // if(!title || !rating || !url) {
-        //     return res
-        //             .status(400)
-        //             .send('invalid data')
-        // }
-
         for(const [key, value] of Object.entries(newBookmark)) {
             if(value == null) {
                 return res.status(400).json({
@@ -46,7 +40,9 @@ bookmarkRouter
         if(Math.floor(rating) > 5 || Math.floor(rating) < 0) {
             return res
                 .status(400)
-                .send('rating must be 1-5')
+                .json({
+                    error: { message: `number must be between 1-5` }
+                })
         }
 
         BookmarksService.insertBookmark(
