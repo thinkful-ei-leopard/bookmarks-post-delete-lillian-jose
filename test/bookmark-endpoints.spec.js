@@ -253,6 +253,42 @@ describe.only('Bookmarks Endpoints', function() {
                             .expect(expectedBookmark)
                             )
             })
+            // Test to see if required fields were not supplied
+            it(`responds with 400 when no required fields supplied`, () => {
+                const idToUpdate = 2
+                return supertest(app)
+                    .patch(`/api/bookmarks/${idToUpdate}`)
+                    .send({ irrelevantField: 'Foo' })
+                    .expect(400, {
+                        error: {
+                            message: `request body must contain either 'title', 'url', or 'rating'`
+                        }
+                    })
+            })
+
+            it(`responds with 204 when updating only a subset of fields`, () => {
+                const idToUpdate = 2
+                const updateBookmark = {
+                    title: 'updated bookmark title',
+                }
+                const expectedBookmark = {
+                    ...testBookmarks[idToUpdate - 1],
+                    ...updateBookmark
+                }
+
+                return supertest(app)
+                    .patch(`/api/bookmarks/${idToUpdate}`)
+                    .send({
+                        ...updateBookmark,
+                        fieldToIgnore: 'should not be in GET response'
+                    })
+                    .expect(204)
+                    .then(res => 
+                        supertest(app)
+                            .get(`/api/bookmarks/${idToUpdate}`)
+                            .expect(expectedBookmark)
+                    )
+            })
         })
     })
 
