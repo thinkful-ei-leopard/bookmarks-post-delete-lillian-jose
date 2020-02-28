@@ -3,6 +3,7 @@ const app = require('../src/app')
 const { makeBookmarksArray } = require('./bookmark.fixtures')
 
 
+
 describe.only('Bookmarks Endpoints', function() {
     let knexInstance
 
@@ -74,6 +75,32 @@ describe.only('Bookmarks Endpoints', function() {
                 return supertest(app)
                     .get(`/bookmarks/${bookmarkId}`)
                     .expect(200, expectedBookmark)
+            })
+        })
+
+        context(`Given an xss attck article`, () => {
+            const maliciousBookmark = {
+                id: 911,
+                title: `Naughty naughty very naughty <script>alert("xss");</script>`,
+                url: "www.naughty.com",
+                description: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`,
+                rating: 1
+            }
+
+            beforeEach(`insert malicious bookmark`, () => {
+                return knexInstance
+                    .into('bookmarks_table')
+                    .insert([maliciousBookmark])
+            })
+
+            it('removes xss attack content', () => {
+                return supertest(app)
+                        .get(`/bookmarks/${maliciousBookmark.id}`)
+                        .expect(200)
+                        .expect(res => {
+                            expect(res.body.title).to.eql('Naughty naughty very naughty &lt;script&gt;alert(\"xss\");&lt;/script&gt;')
+                            expect(res.body.description).to.eql(`Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`)
+                        })
             })
         })
     })

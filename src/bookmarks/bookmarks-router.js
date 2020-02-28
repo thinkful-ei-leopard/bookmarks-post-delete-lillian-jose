@@ -1,4 +1,5 @@
 const express = require('express')
+const xss = require('xss')
 const uuid = require('uuid/v4')
 const logger = require('../logger')
 const { bookmarks } = require('../store')
@@ -39,6 +40,7 @@ bookmarkRouter
                         error: { message: `url length must be at least 5 characters in length`}
                     })
         }
+
         if(Math.floor(rating) > 5 || Math.floor(rating) < 0) {
             return res
                 .status(400)
@@ -68,7 +70,13 @@ bookmarkRouter
                         error: { message: `bookmark doesn't exist` }
                     })
                 }
-                res.json(bookmark)
+                res.json({
+                    id: bookmark.id,
+                    title: xss(bookmark.title),
+                    url: xss(bookmark.url),
+                    description: xss(bookmark.description),
+                    rating: bookmark.rating
+                })
             })
             .catch(next)
     })
