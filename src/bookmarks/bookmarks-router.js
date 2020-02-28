@@ -80,20 +80,19 @@ bookmarkRouter
             })
             .catch(next)
     })
-    .delete((req, res) => {
-        const { id } = req.params
+    .delete((req, res, next) => {
+        const knexInstance = req.app.get('knexInstance')
 
-        const bookmarkIndex = bookmarks.findIndex( bookmark => bookmark.id == id)
-
-        if(bookmarkIndex === -1) {
-            logger.error(`bookmark with id ${id} not found`)
-            return res.status(404).send('bookmark not found')
-        }
-
-        bookmarks.splice(bookmarkIndex, 1)
-
-        logger.info(`bookmark with id ${id} deleted`)
-        res.status(204).end()
+        BookmarksService.deleteBookmark(knexInstance, req.params.id)
+            .then(bookmark => {
+                if(!bookmark) {
+                    return res.status(404).json({
+                        error: { message: `bookmark doesn't exist` }
+                    })
+                }
+                res.status(204).end()
+            })
+            .catch(next)
     })
 
     module.exports = bookmarkRouter

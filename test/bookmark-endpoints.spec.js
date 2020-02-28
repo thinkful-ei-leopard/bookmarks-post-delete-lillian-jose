@@ -78,7 +78,7 @@ describe.only('Bookmarks Endpoints', function() {
             })
         })
 
-        context(`Given an xss attck article`, () => {
+        context(`Given an xss attack bookmark`, () => {
             const maliciousBookmark = {
                 id: 911,
                 title: `Naughty naughty very naughty <script>alert("xss");</script>`,
@@ -172,6 +172,34 @@ describe.only('Bookmarks Endpoints', function() {
                 .expect(400, {
                     error: { message: `number must be between 1-5` }
                 })
+        })
+    })
+
+    describe(` DELETE /bookmarks/:id`, () => {
+        context(`Given there are bookmarks in the database`, () => {
+            const testBookmarks = makeBookmarksArray()
+
+            beforeEach('insert bookmarks', () => {
+                return knexInstance
+                    .into('bookmarks_table')
+                    .insert(testBookmarks)
+            })
+
+            it(`responds with a 204 and removes bookmark`, () => {
+                const idToRemove = 1
+                const expectedBookmarks = testBookmarks.filter(bookmark => {
+                    bookmark.id !== idToRemove
+                });
+
+                return supertest(app)
+                    .delete(`/bookmarks/${idToRemove}`)
+                    .expect(204)
+                    .then(res => {
+                        supertest(app)
+                        .get('/bookmarks')
+                        .expect(expectedBookmarks)
+                    })
+            })
         })
     })
 
